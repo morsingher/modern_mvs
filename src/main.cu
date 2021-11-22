@@ -1,8 +1,7 @@
 #include "patchmatch.h"
 #include "point_cloud.h"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   if (argc < 2) {
     std::cout << "Usage: <executable> <config_file>" << std::endl;
     return EXIT_FAILURE;

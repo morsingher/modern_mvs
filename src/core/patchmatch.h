@@ -2,9 +2,9 @@
 #define MVS_PATCHMATCH_H
 
 #include "io_utils.h"
+#include "mat.h"
 #include "options.h"
 #include "timer.h"
-#include "mat.h"
 
 #include "cuda_kernels.h"
 

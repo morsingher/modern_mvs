@@ -1,7 +1,6 @@
 #include "options.h"
 
-bool Options::load()
-{
+bool Options::load() {
   std::cout << std::endl << "Reading options from: " << filename << std::endl;
 
   FILE* fp = fopen(filename.c_str(), "r");

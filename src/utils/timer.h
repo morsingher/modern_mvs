@@ -8,12 +8,10 @@ using namespace std::chrono;
 class Timer {
  public:
   Timer(const std::string& name) : func(name), started(true) { start_time = high_resolution_clock::now(); };
-  inline void stop()
-  {
+  inline void stop() {
     if (!started) {
       std::cout << "Timer never started" << std::endl;
-    }
-    else {
+    } else {
       const auto end_time = high_resolution_clock::now();
       const auto duration = duration_cast<nanoseconds>(end_time - start_time);
       const double elapsed = duration.count() / 1e9;

@@ -18,8 +18,7 @@ class Mat {
   cv::Mat_<T> data;
 
   template <typename U = T, typename = std::enable_if_t<std::is_same<float, U>::value>>
-  bool readGrayscale()
-  {
+  bool readGrayscale() {
     data = cv::imread(filename, cv::IMREAD_GRAYSCALE);
     height = data.rows;
     width = data.cols;
@@ -28,8 +27,7 @@ class Mat {
   }
 
   template <typename U = T, typename = std::enable_if_t<std::is_same<cv::Vec3f, U>::value>>
-  bool readColor()
-  {
+  bool readColor() {
     data = cv::imread(filename, cv::IMREAD_COLOR);
     height = data.rows;
     width = data.cols;
@@ -53,14 +51,12 @@ using Mat2D = Mat<float>;
 using Mat3D = Mat<cv::Vec3f>;
 
 template <typename T>
-void Mat<T>::writePng()
-{
+void Mat<T>::writePng() {
   writePng(filename);
 }
 
 template <typename T>
-void Mat<T>::writePng(const std::string& path_out)
-{
+void Mat<T>::writePng(const std::string& path_out) {
   cv::Mat_<T> data_out = cv::Mat::zeros(height, width, CV_MAKETYPE(CV_32F, depth));
 
   double min, max;
@@ -75,8 +71,7 @@ void Mat<T>::writePng(const std::string& path_out)
 }
 
 template <typename T>
-bool Mat<T>::readBinary()
-{
+bool Mat<T>::readBinary() {
   std::fstream text_file(filename, std::ios::in);
   if (!text_file) {
     std::cout << "Failed to open text: " << filename << std::endl;
@@ -100,8 +95,7 @@ bool Mat<T>::readBinary()
 }
 
 template <typename T>
-bool Mat<T>::writeBinary()
-{
+bool Mat<T>::writeBinary() {
   std::fstream text_file(filename, std::ios::out);
   if (!text_file) {
     std::cout << "Failed to open text: " << filename << std::endl;
@@ -122,8 +116,7 @@ bool Mat<T>::writeBinary()
 }
 
 template <typename T>
-void Mat<T>::rescale(const int max_size)
-{
+void Mat<T>::rescale(const int max_size) {
   const float s_x = static_cast<float>(max_size) / width;
   const float s_y = static_cast<float>(max_size) / height;
   const float s = std::min(s_x, s_y);
@@ -135,8 +128,7 @@ void Mat<T>::rescale(const int max_size)
 }
 
 template <typename T>
-void Mat<T>::allocate(const int h, const int w, const int d)
-{
+void Mat<T>::allocate(const int h, const int w, const int d) {
   height = h;
   width = w;
   depth = d;

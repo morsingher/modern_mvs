@@ -1,7 +1,6 @@
 #include "patchmatch.h"
 
-bool PatchMatch::loadData()
-{
+bool PatchMatch::loadData() {
   std::string img_path = getFilename(opt_h->img_folder, frame_h->ref_id, ".jpg");
   Mat2D img(img_path);
   if (!img.readGrayscale()) {
@@ -80,8 +79,7 @@ bool PatchMatch::loadData()
   return true;
 }
 
-bool PatchMatch::setCurrentResult()
-{
+bool PatchMatch::setCurrentResult() {
   const std::string depth_path = getFilename(opt_h->depth_folder, frame_h->ref_id, ".dmb");
   Mat2D depth_cur(depth_path);
   if (!depth_cur.readBinary()) {
@@ -114,8 +112,7 @@ bool PatchMatch::setCurrentResult()
   return true;
 }
 
-bool PatchMatch::moveDataToCuda(cuda::device_t device)
-{
+bool PatchMatch::moveDataToCuda(cuda::device_t device) {
   std::cout << "Moving data to CUDA..." << std::endl;
 
   rand_d = cuda::memory::device::make_unique<curandState[]>(device, num_pixels);
@@ -155,8 +152,7 @@ bool PatchMatch::moveDataToCuda(cuda::device_t device)
   return true;
 }
 
-bool PatchMatch::saveResults()
-{
+bool PatchMatch::saveResults() {
   // Get results
 
   const std::string cost_path = getFilename(opt_h->cost_folder, frame_h->ref_id, ".dmb");
@@ -219,8 +215,7 @@ bool PatchMatch::saveResults()
 
 // TODO: maybe break this into smaller functions?
 
-bool PatchMatch::run()
-{
+bool PatchMatch::run() {
   // Load input data
 
   std::cout << "Loading input data..." << std::endl;
@@ -252,15 +247,12 @@ bool PatchMatch::run()
   constexpr cuda::grid::block_dimension_t block_dim = 16;
   constexpr auto block_dims = cuda::grid::block_dimensions_t::square(block_dim);
 
-  const cuda::grid::dimensions_t grid_dims = {
-      cuda::grid::dimension_t((width + block_dim - 1) / block_dim),
-      cuda::grid::dimension_t((height + block_dim - 1) / block_dim),
-      1};
+  const cuda::grid::dimensions_t grid_dims = {cuda::grid::dimension_t((width + block_dim - 1) / block_dim),
+                                              cuda::grid::dimension_t((height + block_dim - 1) / block_dim), 1};
 
-  const cuda::grid::dimensions_t grid_dims_cb = {
-      cuda::grid::dimension_t((width + block_dim - 1) / block_dim),
-      cuda::grid::dimension_t(((height / 2) + block_dim - 1) / block_dim),
-      1};
+  const cuda::grid::dimensions_t grid_dims_cb = {cuda::grid::dimension_t((width + block_dim - 1) / block_dim),
+                                                 cuda::grid::dimension_t(((height / 2) + block_dim - 1) / block_dim),
+                                                 1};
 
   auto planes_ptr = static_cast<Plane*>(planes_d.get());
   auto cameras_ptr = static_cast<Camera*>(cameras_d.get());
@@ -272,16 +264,8 @@ bool PatchMatch::run()
 
   std::cout << "Running initialization kernel..." << std::endl;
 
-  cuda::launch(
-      initialize,
-      cuda::make_launch_config(grid_dims, block_dims),
-      planes_ptr,
-      cameras_ptr,
-      costs_d.get(),
-      rand_d.get(),
-      opt_ptr,
-      images_ptr,
-      views_d.get());
+  cuda::launch(initialize, cuda::make_launch_config(grid_dims, block_dims), planes_ptr, cameras_ptr, costs_d.get(),
+               rand_d.get(), opt_ptr, images_ptr, views_d.get());
 
   device.synchronize();
 
@@ -293,33 +277,13 @@ bool PatchMatch::run()
   for (int iter = 0; iter < num_iterations; iter++) {
     std::cout << "Running black-red kernels for iteration " << iter << "..." << std::endl;
 
-    cuda::launch(
-        checkerboardBlack,
-        cuda::make_launch_config(grid_dims_cb, block_dims),
-        planes_ptr,
-        cameras_ptr,
-        costs_d.get(),
-        rand_d.get(),
-        opt_ptr,
-        images_ptr,
-        depths_ptr,
-        views_d.get(),
-        iter);
+    cuda::launch(checkerboardBlack, cuda::make_launch_config(grid_dims_cb, block_dims), planes_ptr, cameras_ptr,
+                 costs_d.get(), rand_d.get(), opt_ptr, images_ptr, depths_ptr, views_d.get(), iter);
 
     device.synchronize();
 
-    cuda::launch(
-        checkerboardRed,
-        cuda::make_launch_config(grid_dims_cb, block_dims),
-        planes_ptr,
-        cameras_ptr,
-        costs_d.get(),
-        rand_d.get(),
-        opt_ptr,
-        images_ptr,
-        depths_ptr,
-        views_d.get(),
-        iter);
+    cuda::launch(checkerboardRed, cuda::make_launch_config(grid_dims_cb, block_dims), planes_ptr, cameras_ptr,
+                 costs_d.get(), rand_d.get(), opt_ptr, images_ptr, depths_ptr, views_d.get(), iter);
 
     device.synchronize();
   }
@@ -344,8 +308,7 @@ bool PatchMatch::run()
   return true;
 }
 
-PatchMatch::~PatchMatch()
-{
+PatchMatch::~PatchMatch() {
   cuda::memory::device::free(planes_d);
   cuda::memory::device::free(cameras_d);
   cuda::memory::device::free(opt_d);

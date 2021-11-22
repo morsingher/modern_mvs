@@ -2,8 +2,7 @@
 
 // Utilities
 
-CUDA_FD void sortVector(float* d, const int n)
-{
+CUDA_FD void sortVector(float* d, const int n) {
   int j;
   for (int i = 1; i < n; i++) {
     float tmp = d[i];
@@ -14,8 +13,7 @@ CUDA_FD void sortVector(float* d, const int n)
   }
 }
 
-CUDA_FD int findMinCostIndex(const float* costs, const int n)
-{
+CUDA_FD int findMinCostIndex(const float* costs, const int n) {
   float min_cost = costs[0];
   int min_cost_idx = 0;
   for (int idx = 1; idx < n; ++idx) {
@@ -31,8 +29,7 @@ CUDA_FD void setBit(unsigned int& input, const unsigned int n) { input |= (unsig
 
 CUDA_FD int isSet(unsigned int input, const unsigned int n) { return (input >> n) & 1; }
 
-CUDA_FD void transformPDFToCDF(float* probs, const int num_probs)
-{
+CUDA_FD void transformPDFToCDF(float* probs, const int num_probs) {
   float prob_sum = 0.0f;
   for (int i = 0; i < num_probs; ++i) {
     prob_sum += probs[i];
@@ -50,19 +47,13 @@ CUDA_FD void transformPDFToCDF(float* probs, const int num_probs)
 // TODO: I have no idea why this does not work when uncommenting the line below
 // return plane.getDepth(cam, pix);
 
-CUDA_FD float getDepthFromPlane(const Camera& cam, const Plane& plane, const Pixel pix)
-{
+CUDA_FD float getDepthFromPlane(const Camera& cam, const Plane& plane, const Pixel pix) {
   const Eigen::Vector3d point = cam.getViewDirection(pix.x, pix.y);
   return -plane.dist / plane.normal.dot(point);
 }
 
-CUDA_FD Eigen::Vector3d perturbNormal(
-    const Camera& camera,
-    const Pixel pix,
-    const Plane& plane_cur,
-    curandState* rand,
-    const float perturbation)
-{
+CUDA_FD Eigen::Vector3d perturbNormal(const Camera& camera, const Pixel pix, const Plane& plane_cur, curandState* rand,
+                                      const float perturbation) {
   const float a1 = (curand_uniform(rand) - 0.5f) * perturbation;
   const float a2 = (curand_uniform(rand) - 0.5f) * perturbation;
   const float a3 = (curand_uniform(rand) - 0.5f) * perturbation;
@@ -92,8 +83,7 @@ CUDA_FD Eigen::Vector3d perturbNormal(
 // TODO: Why can't this be simplified further?
 // const Eigen::Vector3d t_rel = src_cam.t - R_rel * ref_cam.t;
 
-CUDA_FD Eigen::Matrix3d computeHomography(const Camera& ref_cam, const Camera& src_cam, const Plane& plane)
-{
+CUDA_FD Eigen::Matrix3d computeHomography(const Camera& ref_cam, const Camera& src_cam, const Plane& plane) {
   const Eigen::Vector3d C_ref = -ref_cam.R.transpose() * ref_cam.t;
   const Eigen::Vector3d C_src = -src_cam.R.transpose() * src_cam.t;
   const Eigen::Vector3d C_rel = C_ref - C_src;
@@ -106,29 +96,21 @@ CUDA_FD Eigen::Matrix3d computeHomography(const Camera& ref_cam, const Camera& s
   return homo;
 }
 
-CUDA_FD Pixel projectWithHomography(const Eigen::Matrix3d& homo, const Pixel pix)
-{
+CUDA_FD Pixel projectWithHomography(const Eigen::Matrix3d& homo, const Pixel pix) {
   const Eigen::Vector3d vec(pix.x, pix.y, 1.0);
   const Eigen::Vector3d proj = homo * vec;
   return make_float2(proj.x() / proj.z(), proj.y() / proj.z());
 }
 
-CUDA_FD float computeBilateralWeight(const float color_dist, const float spatial_dist, const Options* opt)
-{
+CUDA_FD float computeBilateralWeight(const float color_dist, const float spatial_dist, const Options* opt) {
   const float color_norm = 2.0 * opt->sigma_color * opt->sigma_color;
   const float spatial_norm = 2.0 * opt->sigma_spatial * opt->sigma_spatial;
   return exp(-(spatial_dist / spatial_norm) - (color_dist / color_norm));
 }
 
-CUDA_FD float computeBilateralNCC(
-    const cudaTextureObject_t ref_img,
-    const Camera& ref_cam,
-    const cudaTextureObject_t src_img,
-    const Camera& src_cam,
-    const Pixel pix,
-    const Plane& plane,
-    const Options* opt)
-{
+CUDA_FD float computeBilateralNCC(const cudaTextureObject_t ref_img, const Camera& ref_cam,
+                                  const cudaTextureObject_t src_img, const Camera& src_cam, const Pixel pix,
+                                  const Plane& plane, const Options* opt) {
   const int radius = opt->patch_size / 2;
 
   const Eigen::Matrix3d homo = computeHomography(ref_cam, src_cam, plane);
@@ -197,22 +179,15 @@ CUDA_FD float computeBilateralNCC(
   const float min_var = 1e-5f;
   if (var_ref < min_var || var_src < min_var) {
     return opt->max_cost;
-  }
-  else {
+  } else {
     const float covar_src_ref = sum_ref_src - sum_ref * sum_src;
     const float var_ref_src = sqrt(var_ref * var_src);
     return max(0.0f, min(opt->max_cost, 1.0f - covar_src_ref / var_ref_src));
   }
 }
 
-CUDA_FD float computeTopKCost(
-    const cudaTextureObject_t* images,
-    const Camera* cameras,
-    const Pixel pix,
-    const Plane& plane,
-    unsigned int* views,
-    const Options* opt)
-{
+CUDA_FD float computeTopKCost(const cudaTextureObject_t* images, const Camera* cameras, const Pixel pix,
+                              const Plane& plane, unsigned int* views, const Options* opt) {
   float cost_vector[MAX_IMAGES] = {opt->max_cost};
   float cost_vector_copy[MAX_IMAGES] = {opt->max_cost};
   int cost_count = 0, num_valid_views = 0;
@@ -248,26 +223,15 @@ CUDA_FD float computeTopKCost(
   return opt->max_cost;
 }
 
-CUDA_FD void computeMultiViewCost(
-    const cudaTextureObject_t* images,
-    const Camera* cameras,
-    const Pixel pix,
-    const Plane& plane,
-    float* cost_vector,
-    const Options* opt)
-{
+CUDA_FD void computeMultiViewCost(const cudaTextureObject_t* images, const Camera* cameras, const Pixel pix,
+                                  const Plane& plane, float* cost_vector, const Options* opt) {
   for (int i = 1; i < opt->num_images; ++i) {
     cost_vector[i - 1] = computeBilateralNCC(images[0], cameras[0], images[i], cameras[i], pix, plane, opt);
   }
 }
 
-CUDA_FD float computeGeometricCost(
-    const cudaTextureObject_t src_depth_tex,
-    const Camera& ref_cam,
-    const Camera& src_cam,
-    const Plane& plane,
-    const Pixel pix)
-{
+CUDA_FD float computeGeometricCost(const cudaTextureObject_t src_depth_tex, const Camera& ref_cam,
+                                   const Camera& src_cam, const Plane& plane, const Pixel pix) {
   const float max_cost = 5.0f;
 
   const float ref_depth = getDepthFromPlane(ref_cam, plane, pix);
@@ -288,19 +252,9 @@ CUDA_FD float computeGeometricCost(
   return min(max_cost, sqrt(diff_col * diff_col + diff_row * diff_row));
 }
 
-CUDA_FD void refinePlanes(
-    const cudaTextureObject_t* images,
-    const cudaTextureObject_t* depths_tex,
-    const Camera* cameras,
-    Plane* plane,
-    float* depth,
-    float* cost,
-    curandState* rand,
-    const float* view_weights,
-    const float weight_norm,
-    const Pixel pix,
-    const Options* opt)
-{
+CUDA_FD void refinePlanes(const cudaTextureObject_t* images, const cudaTextureObject_t* depths_tex,
+                          const Camera* cameras, Plane* plane, float* depth, float* cost, curandState* rand,
+                          const float* view_weights, const float weight_norm, const Pixel pix, const Options* opt) {
   const float perturbation = 0.02f;
 
   // Random plane
@@ -342,11 +296,9 @@ CUDA_FD void refinePlanes(
     for (int j = 0; j < opt->num_images - 1; ++j) {
       if (view_weights[j] > 0) {
         if (opt->geom_cons) {
-          temp_cost +=
-              view_weights[j] *
-              (cost_vector[j] + computeGeometricCost(depths_tex[j + 1], cameras[0], cameras[j + 1], new_plane, pix));
-        }
-        else {
+          temp_cost += view_weights[j] * (cost_vector[j] + computeGeometricCost(depths_tex[j + 1], cameras[0],
+                                                                                cameras[j + 1], new_plane, pix));
+        } else {
           temp_cost += view_weights[j] * cost_vector[j];
         }
       }
@@ -366,18 +318,9 @@ CUDA_FD void refinePlanes(
 // It's not as trivial as it seems, since every case must be handled differently
 // A naive idea would be to write 8 separate functions
 
-CUDA_FD void checkerboardPropagation(
-    const cudaTextureObject_t* images,
-    const cudaTextureObject_t* depths_tex,
-    const Camera* cameras,
-    Plane* planes,
-    float* costs,
-    curandState* rand,
-    unsigned int* views,
-    const Pixel pix,
-    const Options* opt,
-    const int iter)
-{
+CUDA_FD void checkerboardPropagation(const cudaTextureObject_t* images, const cudaTextureObject_t* depths_tex,
+                                     const Camera* cameras, Plane* planes, float* costs, curandState* rand,
+                                     unsigned int* views, const Pixel pix, const Options* opt, const int iter) {
   if (cameras[0].outsideBounds(pix.x, pix.y)) {
     return;
   }
@@ -601,8 +544,7 @@ CUDA_FD void checkerboardPropagation(
       for (int j = 0; j < opt->num_images - 1; ++j) {
         if (isSet(views[neighbor_positions[i]], j) == 1) {
           view_selection_priors[j] += 0.9f;
-        }
-        else {
+        } else {
           view_selection_priors[j] += 0.1f;
         }
       }
@@ -633,8 +575,7 @@ CUDA_FD void checkerboardPropagation(
 
     if (count_good > 2 && count_bad < 3) {
       sampling_probs[i] = tmpw / count_good;  // w(I_j) for each I_j in S_t, eq 4 ACMM paper
-    }
-    else if (count_bad < 3) {
+    } else if (count_bad < 3) {
       sampling_probs[i] = expf(cost_threshold * cost_threshold / (-0.32f));
     }
 
@@ -675,16 +616,13 @@ CUDA_FD void checkerboardPropagation(
       if (view_weights[j] > 0) {
         if (opt->geom_cons) {
           if (flag[i]) {
-            final_costs[i] +=
-                view_weights[j] *
-                (cost_array[i][j] +
-                 0.1 * computeGeometricCost(depths_tex[j + 1], cameras[0], cameras[j + 1], planes[positions[i]], pix));
-          }
-          else {
+            final_costs[i] += view_weights[j] * (cost_array[i][j] +
+                                                 0.1 * computeGeometricCost(depths_tex[j + 1], cameras[0],
+                                                                            cameras[j + 1], planes[positions[i]], pix));
+          } else {
             final_costs[i] += view_weights[j] * (cost_array[i][j] + 0.1 * 5.0);
           }
-        }
-        else {
+        } else {
           final_costs[i] += view_weights[j] * cost_array[i][j];
         }
       }
@@ -701,11 +639,10 @@ CUDA_FD void checkerboardPropagation(
   float cost_cur = 0.0f;
   for (int i = 0; i < opt->num_images - 1; ++i) {
     if (opt->geom_cons) {
-      cost_cur += view_weights[i] *
-                  (cost_vector_cur[i] +
-                   0.1f * computeGeometricCost(depths_tex[i + 1], cameras[0], cameras[i + 1], planes[idx], pix));
-    }
-    else {
+      cost_cur +=
+          view_weights[i] * (cost_vector_cur[i] + 0.1f * computeGeometricCost(depths_tex[i + 1], cameras[0],
+                                                                              cameras[i + 1], planes[idx], pix));
+    } else {
       cost_cur += view_weights[i] * cost_vector_cur[i];
     }
   }
@@ -724,31 +661,14 @@ CUDA_FD void checkerboardPropagation(
     }
   }
 
-  refinePlanes(
-      images,
-      depths_tex,
-      cameras,
-      &planes[idx],
-      &depth_cur,
-      &costs[idx],
-      &rand[idx],
-      view_weights,
-      weight_norm,
-      pix,
-      opt);
+  refinePlanes(images, depths_tex, cameras, &planes[idx], &depth_cur, &costs[idx], &rand[idx], view_weights,
+               weight_norm, pix, opt);
 }
 
 // Actual kernels
 
-__global__ void initialize(
-    Plane* planes,
-    const Camera* cameras,
-    float* costs,
-    curandState* rand,
-    const Options* opt,
-    TextureArray* images,
-    unsigned int* views)
-{
+__global__ void initialize(Plane* planes, const Camera* cameras, float* costs, curandState* rand, const Options* opt,
+                           TextureArray* images, unsigned int* views) {
   const Pixel pix = make_float2(blockIdx.x * blockDim.x + threadIdx.x, blockIdx.y * blockDim.y + threadIdx.y);
   if (cameras[0].outsideBounds(pix.x, pix.y)) {
     return;
@@ -758,50 +678,33 @@ __global__ void initialize(
   curand_init(clock64(), pix.y, pix.x, &rand[idx]);
 
   if (opt->geom_cons) {
-    planes[idx].rotateNormalToCamera(cameras[0]);
     planes[idx].setDistanceFromDepth(cameras[0], pix, planes[idx].dist);
-  }
-  else {
+  } else {
     planes[idx].setRandom(cameras[0], pix, &rand[idx]);
   }
 
   costs[idx] = computeTopKCost(images->data, cameras, pix, planes[idx], &views[idx], opt);
 }
 
-__global__ void checkerboardBlack(
-    Plane* planes,
-    const Camera* cameras,
-    float* costs,
-    curandState* rand,
-    const Options* opt,
-    TextureArray* images,
-    TextureArray* depths,
-    unsigned int* views,
-    const int iter)
-{
+__global__ void checkerboardBlack(Plane* planes, const Camera* cameras, float* costs, curandState* rand,
+                                  const Options* opt, TextureArray* images, TextureArray* depths, unsigned int* views,
+                                  const int iter) {
   Pixel pix = make_float2(blockIdx.x * blockDim.x + threadIdx.x, blockIdx.y * blockDim.y + threadIdx.y);
   pix.y = (threadIdx.x % 2 == 0) ? (pix.y * 2) : (pix.y * 2 + 1);
   checkerboardPropagation(images->data, depths->data, cameras, planes, costs, rand, views, pix, opt, iter);
 }
 
-__global__ void checkerboardRed(
-    Plane* planes,
-    const Camera* cameras,
-    float* costs,
-    curandState* rand,
-    const Options* opt,
-    TextureArray* images,
-    TextureArray* depths,
-    unsigned int* views,
-    const int iter)
-{
+__global__ void checkerboardRed(Plane* planes, const Camera* cameras, float* costs, curandState* rand,
+                                const Options* opt, TextureArray* images, TextureArray* depths, unsigned int* views,
+                                const int iter) {
   Pixel pix = make_float2(blockIdx.x * blockDim.x + threadIdx.x, blockIdx.y * blockDim.y + threadIdx.y);
   pix.y = (threadIdx.x % 2 == 0) ? (pix.y * 2 + 1) : (pix.y * 2);
   checkerboardPropagation(images->data, depths->data, cameras, planes, costs, rand, views, pix, opt, iter);
 }
 
-__global__ void getResults(Plane* planes, const Camera* cameras)
-{
+// TODO: this kernel can be removed. When you save results, just get distance from depth.
+
+__global__ void getResults(Plane* planes, const Camera* cameras) {
   const Pixel pix = make_float2(blockIdx.x * blockDim.x + threadIdx.x, blockIdx.y * blockDim.y + threadIdx.y);
   if (cameras[0].outsideBounds(pix.x, pix.y)) {
     return;
@@ -810,5 +713,4 @@ __global__ void getResults(Plane* planes, const Camera* cameras)
   const int idx = pix.y * cameras[0].width + pix.x;
 
   planes[idx].setDistanceAsDepth(cameras[0], pix);
-  planes[idx].rotateNormalToWorld(cameras[0]);
 }

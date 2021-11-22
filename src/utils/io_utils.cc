@@ -1,7 +1,6 @@
 #include "io_utils.h"
 
-std::vector<FramePtr> readFrames(const std::string& path)
-{
+std::vector<FramePtr> readFrames(const std::string& path) {
   std::cout << "Reading frames from: " << path << std::endl;
 
   std::vector<FramePtr> frames;
@@ -29,8 +28,7 @@ std::vector<FramePtr> readFrames(const std::string& path)
   return frames;
 }
 
-bool checkInputData(const std::string& folder)
-{
+bool checkInputData(const std::string& folder) {
   for (const auto& sub : {"", "pair.txt", "images/", "cameras/"}) {
     if (!std::filesystem::exists(folder + sub)) {
       std::cout << folder + sub << " does not exist!" << std::endl;
@@ -41,8 +39,7 @@ bool checkInputData(const std::string& folder)
   return true;
 }
 
-void createOutputDir(const std::string& folder)
-{
+void createOutputDir(const std::string& folder) {
   if (std::filesystem::exists(folder)) {
     std::filesystem::remove_all(folder);
   }
@@ -53,8 +50,7 @@ void createOutputDir(const std::string& folder)
   }
 }
 
-std::string getFilename(const std::string& folder, const int id, const std::string& ext)
-{
+std::string getFilename(const std::string& folder, const int id, const std::string& ext) {
   std::stringstream path;
   path << folder << std::setw(8) << std::setfill('0') << id << ext;
   return path.str();

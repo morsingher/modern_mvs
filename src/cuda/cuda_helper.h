@@ -31,8 +31,7 @@
 
 // CUDA Runtime error messages
 #ifdef __DRIVER_TYPES_H__
-static const char* _cudaGetErrorEnum(cudaError_t error)
-{
+static const char* _cudaGetErrorEnum(cudaError_t error) {
   switch (error) {
     case cudaSuccess:
       return "cudaSuccess";
@@ -285,8 +284,7 @@ static const char* _cudaGetErrorEnum(cudaError_t error)
 
 #ifdef __cuda_cuda_h__
 // CUDA Driver API errors
-static const char* _cudaGetErrorEnum(CUresult error)
-{
+static const char* _cudaGetErrorEnum(CUresult error) {
   switch (error) {
     case CUDA_SUCCESS:
       return "CUDA_SUCCESS";
@@ -436,8 +434,7 @@ static const char* _cudaGetErrorEnum(CUresult error)
 
 #ifdef CUBLAS_API_H_
 // cuBLAS API errors
-static const char* _cudaGetErrorEnum(cublasStatus_t error)
-{
+static const char* _cudaGetErrorEnum(cublasStatus_t error) {
   switch (error) {
     case CUBLAS_STATUS_SUCCESS:
       return "CUBLAS_STATUS_SUCCESS";
@@ -470,8 +467,7 @@ static const char* _cudaGetErrorEnum(cublasStatus_t error)
 
 #ifdef _CUFFT_H_
 // cuFFT API errors
-static const char* _cudaGetErrorEnum(cufftResult error)
-{
+static const char* _cudaGetErrorEnum(cufftResult error) {
   switch (error) {
     case CUFFT_SUCCESS:
       return "CUFFT_SUCCESS";
@@ -528,8 +524,7 @@ static const char* _cudaGetErrorEnum(cufftResult error)
 
 #ifdef CUSPARSEAPI
 // cuSPARSE API errors
-static const char* _cudaGetErrorEnum(cusparseStatus_t error)
-{
+static const char* _cudaGetErrorEnum(cusparseStatus_t error) {
   switch (error) {
     case CUSPARSE_STATUS_SUCCESS:
       return "CUSPARSE_STATUS_SUCCESS";
@@ -565,8 +560,7 @@ static const char* _cudaGetErrorEnum(cusparseStatus_t error)
 
 #ifdef CURAND_H_
 // cuRAND API errors
-static const char* _cudaGetErrorEnum(curandStatus_t error)
-{
+static const char* _cudaGetErrorEnum(curandStatus_t error) {
   switch (error) {
     case CURAND_STATUS_SUCCESS:
       return "CURAND_STATUS_SUCCESS";
@@ -614,8 +608,7 @@ static const char* _cudaGetErrorEnum(curandStatus_t error)
 
 #ifdef NV_NPPIDEFS_H
 // NPP API errors
-static const char* _cudaGetErrorEnum(NppStatus error)
-{
+static const char* _cudaGetErrorEnum(NppStatus error) {
   switch (error) {
     case NPP_NOT_SUPPORTED_MODE_ERROR:
       return "NPP_NOT_SUPPORTED_MODE_ERROR";
@@ -876,17 +869,10 @@ static const char* _cudaGetErrorEnum(NppStatus error)
 #endif
 
 template <typename T>
-void check(T result, char const* const func, const char* const file, int const line)
-{
+void check(T result, char const* const func, const char* const file, int const line) {
   if (result) {
-    fprintf(
-        stderr,
-        "CUDA error at %s:%d code=%d(%s) \"%s\" \n",
-        file,
-        line,
-        static_cast<unsigned int>(result),
-        _cudaGetErrorEnum(result),
-        func);
+    fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n", file, line, static_cast<unsigned int>(result),
+            _cudaGetErrorEnum(result), func);
     DEVICE_RESET
     // Make sure we call CUDA Device Reset before exiting
     exit(EXIT_FAILURE);
@@ -900,19 +886,12 @@ void check(T result, char const* const func, const char* const file, int const l
 // This will output the proper error string when calling cudaGetLastError
 #define getLastCudaError(msg) __getLastCudaError(msg, __FILE__, __LINE__)
 
-inline void __getLastCudaError(const char* errorMessage, const char* file, const int line)
-{
+inline void __getLastCudaError(const char* errorMessage, const char* file, const int line) {
   cudaError_t err = cudaGetLastError();
 
   if (cudaSuccess != err) {
-    fprintf(
-        stderr,
-        "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n",
-        file,
-        line,
-        errorMessage,
-        (int)err,
-        cudaGetErrorString(err));
+    fprintf(stderr, "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n", file, line, errorMessage, (int)err,
+            cudaGetErrorString(err));
     DEVICE_RESET
     exit(EXIT_FAILURE);
   }
@@ -924,27 +903,25 @@ inline void __getLastCudaError(const char* errorMessage, const char* file, const
 #endif
 
 // Beginning of GPU Architecture definitions
-inline int _ConvertSMVer2Cores(int major, int minor)
-{
+inline int _ConvertSMVer2Cores(int major, int minor) {
   // Defines for GPU Architecture types (using the SM version to determine the # of cores per SM
   typedef struct {
     int SM;  // 0xMm (hexidecimal notation), M = SM Major version, and m = SM minor version
     int Cores;
   } sSMtoCores;
 
-  sSMtoCores nGpuArchCoresPerSM[] = {
-      {0x10, 8},    // Tesla Generation (SM 1.0) G80 class
-      {0x11, 8},    // Tesla Generation (SM 1.1) G8x class
-      {0x12, 8},    // Tesla Generation (SM 1.2) G9x class
-      {0x13, 8},    // Tesla Generation (SM 1.3) GT200 class
-      {0x20, 32},   // Fermi Generation (SM 2.0) GF100 class
-      {0x21, 48},   // Fermi Generation (SM 2.1) GF10x class
-      {0x30, 192},  // Kepler Generation (SM 3.0) GK10x class
-      {0x32, 192},  // Kepler Generation (SM 3.2) GK10x class
-      {0x35, 192},  // Kepler Generation (SM 3.5) GK11x class
-      {0x37, 192},  // Kepler Generation (SM 3.7) GK21x class
-      {0x50, 128},  // Maxwell Generation (SM 5.0) GM10x class
-      {-1, -1}};
+  sSMtoCores nGpuArchCoresPerSM[] = {{0x10, 8},    // Tesla Generation (SM 1.0) G80 class
+                                     {0x11, 8},    // Tesla Generation (SM 1.1) G8x class
+                                     {0x12, 8},    // Tesla Generation (SM 1.2) G9x class
+                                     {0x13, 8},    // Tesla Generation (SM 1.3) GT200 class
+                                     {0x20, 32},   // Fermi Generation (SM 2.0) GF100 class
+                                     {0x21, 48},   // Fermi Generation (SM 2.1) GF10x class
+                                     {0x30, 192},  // Kepler Generation (SM 3.0) GK10x class
+                                     {0x32, 192},  // Kepler Generation (SM 3.2) GK10x class
+                                     {0x35, 192},  // Kepler Generation (SM 3.5) GK11x class
+                                     {0x37, 192},  // Kepler Generation (SM 3.7) GK21x class
+                                     {0x50, 128},  // Maxwell Generation (SM 5.0) GM10x class
+                                     {-1, -1}};
 
   int index = 0;
 
@@ -957,19 +934,15 @@ inline int _ConvertSMVer2Cores(int major, int minor)
   }
 
   // If we don't find the values, we default use the previous one to run properly
-  printf(
-      "MapSMtoCores for SM %d.%d is undefined.  Default to use %d Cores/SM\n",
-      major,
-      minor,
-      nGpuArchCoresPerSM[index - 1].Cores);
+  printf("MapSMtoCores for SM %d.%d is undefined.  Default to use %d Cores/SM\n", major, minor,
+         nGpuArchCoresPerSM[index - 1].Cores);
   return nGpuArchCoresPerSM[index - 1].Cores;
 }
 // end of GPU Architecture definitions
 
 #ifdef __CUDA_RUNTIME_H__
 // General GPU Device CUDA Initialization
-inline int gpuDeviceInit(int devID)
-{
+inline int gpuDeviceInit(int devID) {
   int device_count;
   checkCudaErrors(cudaGetDeviceCount(&device_count));
 
@@ -1010,8 +983,7 @@ inline int gpuDeviceInit(int devID)
 }
 
 // This function returns the best GPU (with maximum GFLOPS)
-inline int gpuGetMaxGflopsDeviceId()
-{
+inline int gpuGetMaxGflopsDeviceId() {
   int current_device = 0, sm_per_multiproc = 0;
   int max_perf_device = 0;
   int device_count = 0, best_SM_arch = 0;
@@ -1037,8 +1009,7 @@ inline int gpuGetMaxGflopsDeviceId()
       if (deviceProp.major > 0 && deviceProp.major < 9999) {
         best_SM_arch = MAX(best_SM_arch, deviceProp.major);
       }
-    }
-    else {
+    } else {
       devices_prohibited++;
     }
 
@@ -1060,8 +1031,7 @@ inline int gpuGetMaxGflopsDeviceId()
     if (deviceProp.computeMode != cudaComputeModeProhibited) {
       if (deviceProp.major == 9999 && deviceProp.minor == 9999) {
         sm_per_multiproc = 1;
-      }
-      else {
+      } else {
         sm_per_multiproc = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
       }
 
@@ -1076,8 +1046,7 @@ inline int gpuGetMaxGflopsDeviceId()
             max_compute_perf = compute_perf;
             max_perf_device = current_device;
           }
-        }
-        else {
+        } else {
           max_compute_perf = compute_perf;
           max_perf_device = current_device;
         }
@@ -1091,8 +1060,7 @@ inline int gpuGetMaxGflopsDeviceId()
 }
 
 // Initialization code to find the best CUDA Device
-inline int findCudaDevice(int argc, const char** argv)
-{
+inline int findCudaDevice(int argc, const char** argv) {
   cudaDeviceProp deviceProp;
   int devID = 0;
 
@@ -1103,8 +1071,7 @@ inline int findCudaDevice(int argc, const char** argv)
     if (devID < 0) {
       printf("Invalid command line parameter\n ");
       exit(EXIT_FAILURE);
-    }
-    else {
+    } else {
       devID = gpuDeviceInit(devID);
 
       if (devID < 0) {
@@ -1112,26 +1079,20 @@ inline int findCudaDevice(int argc, const char** argv)
         exit(EXIT_FAILURE);
       }
     }
-  }
-  else {
+  } else {
     // Otherwise pick the device with highest Gflops/s
     devID = gpuGetMaxGflopsDeviceId();
     checkCudaErrors(cudaSetDevice(devID));
     checkCudaErrors(cudaGetDeviceProperties(&deviceProp, devID));
-    printf(
-        "GPU Device %d: \"%s\" with compute capability %d.%d\n\n",
-        devID,
-        deviceProp.name,
-        deviceProp.major,
-        deviceProp.minor);
+    printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n", devID, deviceProp.name, deviceProp.major,
+           deviceProp.minor);
   }
 
   return devID;
 }
 
 // General check for CUDA GPU SM Capabilities
-inline bool checkCudaCapabilities(int major_version, int minor_version)
-{
+inline bool checkCudaCapabilities(int major_version, int minor_version) {
   cudaDeviceProp deviceProp;
   deviceProp.major = 0;
   deviceProp.minor = 0;
@@ -1141,11 +1102,10 @@ inline bool checkCudaCapabilities(int major_version, int minor_version)
   checkCudaErrors(cudaGetDeviceProperties(&deviceProp, dev));
 
   if ((deviceProp.major > major_version) || (deviceProp.major == major_version && deviceProp.minor >= minor_version)) {
-    printf(
-        "  Device %d: <%16s >, Compute SM %d.%d detected\n", dev, deviceProp.name, deviceProp.major, deviceProp.minor);
+    printf("  Device %d: <%16s >, Compute SM %d.%d detected\n", dev, deviceProp.name, deviceProp.major,
+           deviceProp.minor);
     return true;
-  }
-  else {
+  } else {
     printf("  No GPU device was found that can support CUDA compute capability %d.%d.\n", major_version, minor_version);
     return false;
   }

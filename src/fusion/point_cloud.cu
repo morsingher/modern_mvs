@@ -1,10 +1,17 @@
 #include "point_cloud.h"
 
+// TODO: not sure it's the right way but it works
+
+cv::Vec3f rotateNormalToWorld(const cv::Vec3f& n, const Eigen::Matrix3d& R) {
+  const Eigen::Vector3d n_cam(n[0], n[1], n[2]);
+  const Eigen::Vector3d n_world = R.transpose() * n_cam;
+  return cv::Vec3f(n_world.x(), n_world.y(), n_world.z());
+}
+
 // TODO: maybe try to break this into smaller functions?
 // I don't know if it makes sense
 
-bool generatePointCloud(const std::vector<FramePtr>& frames, OptionsPtr opt)
-{
+bool generatePointCloud(const std::vector<FramePtr>& frames, OptionsPtr opt) {
   // Step 1: load MVS results
   // This is a tradeoff between memory and speed. If memory is a concern,
   // you should load data when they are needed instead of all at once
@@ -85,7 +92,8 @@ bool generatePointCloud(const std::vector<FramePtr>& frames, OptionsPtr opt)
         if (masks[i](row, col) != 1)  // If the current pixel has never been used
         {
           const float ref_depth = depths[i].getValue(row, col);
-          const cv::Vec3f ref_normal = cv::normalize(normals[i].getValue(row, col));
+          cv::Vec3f ref_normal = cv::normalize(normals[i].getValue(row, col));
+          ref_normal = rotateNormalToWorld(ref_normal, cameras[i].R);
 
           if (ref_depth > 0.0)  // If the depth is valid
           {
@@ -105,7 +113,8 @@ bool generatePointCloud(const std::vector<FramePtr>& frames, OptionsPtr opt)
 
               if (!cameras[src_id].outsideBounds(src_col, src_row) && masks[src_id](src_row, src_col) != 1) {
                 const float src_depth = depths[src_id].getValue(src_row, src_col);
-                const cv::Vec3f src_normal = cv::normalize(normals[src_id].getValue(src_row, src_col));
+                cv::Vec3f src_normal = cv::normalize(normals[src_id].getValue(src_row, src_col));
+                src_normal = rotateNormalToWorld(src_normal, cameras[src_id].R);
 
                 if (src_depth > 0.0) {
                   const Eigen::Vector3d src_pt = cameras[src_id].projectPixelToWorld(src_col, src_row, src_depth);

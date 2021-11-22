@@ -1,7 +1,6 @@
 #include "texture_array.h"
 
-TextureArray::~TextureArray()
-{
+TextureArray::~TextureArray() {
   if (num_images > 0) {
     for (int i = 0; i < num_images; ++i) {
       checkCudaErrors(cudaDestroyTextureObject(data[i]));
@@ -10,8 +9,7 @@ TextureArray::~TextureArray()
   }
 }
 
-void TextureArray::setDataToTextureMemory(const std::vector<Mat2D>& mat)
-{
+void TextureArray::setDataToTextureMemory(const std::vector<Mat2D>& mat) {
   num_images = mat.size();
 
   for (int i = 0; i < num_images; i++) {
@@ -19,8 +17,8 @@ void TextureArray::setDataToTextureMemory(const std::vector<Mat2D>& mat)
     const int cols = mat[i].width;
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindFloat);
     checkCudaErrors(cudaMallocArray(&arrays[i], &channelDesc, cols, rows));
-    checkCudaErrors(cudaMemcpy2DToArray(
-        arrays[i], 0, 0, mat[i].data.ptr(), mat[i].data.step[0], cols * sizeof(float), rows, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy2DToArray(arrays[i], 0, 0, mat[i].data.ptr(), mat[i].data.step[0], cols * sizeof(float),
+                                        rows, cudaMemcpyHostToDevice));
 
     struct cudaResourceDesc resDesc;
     memset(&resDesc, 0, sizeof(cudaResourceDesc));

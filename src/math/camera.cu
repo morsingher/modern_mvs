@@ -1,7 +1,6 @@
 #include "camera.h"
 
-bool Camera::load()
-{
+bool Camera::load() {
   std::ifstream file(filename);
   if (!file) {
     return false;
@@ -28,8 +27,7 @@ bool Camera::load()
   return true;
 }
 
-void Camera::rescale(const int new_width, const int new_height)
-{
+void Camera::rescale(const int new_width, const int new_height) {
   const float s_x = new_width / static_cast<float>(width);
   const float s_y = new_height / static_cast<float>(height);
   K(0, 0) *= s_x;
